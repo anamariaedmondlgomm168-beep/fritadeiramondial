@@ -196,7 +196,7 @@ function ProductPage() {
               <div className="leading-tight">
                 <div className="text-xs line-through opacity-80">R$ 1.299,00</div>
                 <div className="text-2xl font-extrabold">
-                  R$ <span className="text-3xl">72,40</span>
+                  R$ <span className="text-3xl">69,90</span>
                 </div>
               </div>
             </div>
