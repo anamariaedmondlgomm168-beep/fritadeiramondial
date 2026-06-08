@@ -406,7 +406,7 @@ function ProductPage() {
           </button>
           <button className="flex-1 rounded-full bg-rose-500 py-2.5 text-center text-sm font-semibold text-white">
             Comprar agora
-            <div className="text-[11px] font-normal opacity-90">R$ 72,40</div>
+            <div className="text-[11px] font-normal opacity-90">R$ 69,90</div>
           </button>
         </div>
       </div>
