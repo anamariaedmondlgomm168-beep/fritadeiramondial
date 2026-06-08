@@ -404,10 +404,13 @@ function ProductPage() {
           <button className="ml-1 flex-1 rounded-full border border-neutral-900 py-2.5 text-center text-sm font-semibold">
             Adicionar ao carrinho
           </button>
-          <button className="flex-1 rounded-full bg-rose-500 py-2.5 text-center text-sm font-semibold text-white">
+          <a
+            href="https://pay.entregasrapidinho.shop/YEwR3A0vqypgdKy"
+            className="flex-1 rounded-full bg-rose-500 py-2.5 text-center text-sm font-semibold text-white"
+          >
             Comprar agora
             <div className="text-[11px] font-normal opacity-90">R$ 69,90</div>
-          </button>
+          </a>
         </div>
       </div>
     </div>
