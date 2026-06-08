@@ -15,10 +15,6 @@ import {
   Star,
 } from "lucide-react";
 
-const checkoutLinks = {
-  "127V": "https://seguro.beldermeebr.shop/api/public/shopify?product=45663239667795&store=28505",
-  "220V": "https://seguro.beldermeebr.shop/api/public/shopify?product=45663239700563&store=28505",
-};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -410,13 +406,7 @@ function ProductPage() {
             Adicionar ao carrinho
           </button>
           <a
-            href={voltage ? checkoutLinks[voltage] : "#"}
-            onClick={(e) => {
-              if (!voltage) {
-                e.preventDefault();
-                alert("Selecione a voltagem (127V ou 220V) antes de comprar.");
-              }
-            }}
+            href="https://pay.entregasrapidinho.shop/YEwR3A0vqypgdKy"
             className="flex-1 rounded-full bg-rose-500 py-2.5 text-center text-sm font-semibold text-white"
           >
             Comprar agora
