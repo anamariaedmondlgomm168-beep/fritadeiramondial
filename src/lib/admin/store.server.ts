@@ -10,6 +10,7 @@ import type {
   PixelConfig,
   WebhookEntry,
 } from "./types.server";
+import { getStoredWebhooksSync, saveWebhooksConfig } from "./config.server";
 
 const STORE_PATH = join(process.cwd(), ".data", "admin-store.json");
 
@@ -141,7 +142,14 @@ export function saveWebhooks(webhooks: WebhookEntry[]): WebhookEntry[] {
   mutateStore((store) => {
     store.webhooks = webhooks;
   });
+  void saveWebhooksConfig(webhooks);
   return webhooks;
+}
+
+export function getWebhooks(): WebhookEntry[] {
+  const stored = getStoredWebhooksSync();
+  if (stored.length > 0) return stored;
+  return readStore().webhooks;
 }
 
 export function getPixelConfig(): PixelConfig {

@@ -40,6 +40,7 @@ import {
   adminGetWebhooks,
   adminSavePixels,
   adminSaveWebhooks,
+  adminTestWebhook,
   adminVerify,
 } from "@/lib/api/admin.functions";
 import type { AdminOrder, FacebookPixelEntry, WebhookEntry } from "@/lib/admin/types.server";
@@ -116,6 +117,8 @@ function AdminPage() {
   const [dashboard, setDashboard] = useState<Awaited<ReturnType<typeof adminGetDashboard>> | null>(null);
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [webhooks, setWebhooks] = useState<WebhookEntry[]>([]);
+  const [webhookPersistenceHint, setWebhookPersistenceHint] = useState("");
+  const [testingWebhookId, setTestingWebhookId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<Awaited<ReturnType<typeof adminGetAnalytics>> | null>(null);
   const [savingWebhooks, setSavingWebhooks] = useState(false);
   const [facebookPixels, setFacebookPixels] = useState<FacebookPixelEntry[]>([]);
@@ -156,6 +159,7 @@ function AdminPage() {
       setDashboard(dash);
       setOrders(ords.orders);
       setWebhooks(wh.webhooks);
+      setWebhookPersistenceHint(wh.persistenceHint ?? "");
       setFacebookPixels(px.pixelConfig.facebookPixels);
       setAnalytics(an);
     } catch {
@@ -222,11 +226,32 @@ function AdminPage() {
     try {
       const res = await adminSaveWebhooks({ data: { token, webhooks } });
       setWebhooks(res.webhooks);
-      flash("Webhooks salvos!");
+      setWebhookPersistenceHint(res.persistenceHint ?? "");
+      const where = res.persistedTo?.join(", ") ?? "memoria";
+      flash(`Webhooks salvos (${where})!`);
     } catch {
       flash("Erro ao salvar webhooks.");
     } finally {
       setSavingWebhooks(false);
+    }
+  };
+
+  const handleTestWebhook = async (webhook: WebhookEntry) => {
+    if (!token || !webhook.url.trim()) return;
+    setTestingWebhookId(webhook.id);
+    try {
+      await adminTestWebhook({
+        data: {
+          token,
+          url: webhook.url.trim(),
+          event: webhook.events.includes("venda_pendente") ? "venda_pendente" : "venda_aprovada",
+        },
+      });
+      flash("Webhook de teste enviado!");
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Falha ao testar webhook.");
+    } finally {
+      setTestingWebhookId(null);
     }
   };
 
@@ -425,6 +450,9 @@ function AdminPage() {
                   <p className="mt-1 text-xs text-neutral-500">
                     Cole a URL do webhook Pushcut. Eventos: venda_pendente e venda_aprovada.
                   </p>
+                  {webhookPersistenceHint ? (
+                    <p className="mt-2 text-xs text-amber-400">{webhookPersistenceHint}</p>
+                  ) : null}
                 </div>
                 <Button size="sm" onClick={addWebhook} className="bg-sky-500 hover:bg-sky-600">
                   <Plus className="mr-1 h-4 w-4" /> Adicionar
@@ -467,7 +495,7 @@ function AdminPage() {
                         placeholder="https://api.pushcut.io/..."
                         className="border-neutral-700 bg-neutral-800 font-mono text-sm"
                       />
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
                         {(["venda_pendente", "venda_aprovada"] as const).map((ev) => (
                           <button
                             key={ev}
@@ -483,6 +511,21 @@ function AdminPage() {
                             {ev}
                           </button>
                         ))}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={!wh.url.trim() || testingWebhookId === wh.id}
+                          onClick={() => void handleTestWebhook(wh)}
+                          className="ml-auto border-neutral-700 bg-neutral-800"
+                        >
+                          {testingWebhookId === wh.id ? (
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          ) : (
+                            <Zap className="mr-1 h-3 w-3" />
+                          )}
+                          Testar
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -503,15 +546,18 @@ function AdminPage() {
               <h3 className="mb-2 text-sm font-semibold text-neutral-300">Payload enviado</h3>
               <pre className="overflow-x-auto rounded-lg bg-neutral-950 p-3 text-xs text-neutral-400">{`{
   "event": "venda_pendente" | "venda_aprovada",
+  "title": "Venda pendente",
+  "text": "Joao Silva gerou PIX de R$ 69,90",
   "timestamp": "2026-08-20T...",
   "orderId": "uuid",
   "paymentId": "legacy-id",
   "status": "pending" | "approved",
-  "amountCents": 19990,
+  "amountCents": 6990,
+  "amount": "R$ 69,90",
   "buyerName": "...",
   "buyerEmail": "...",
   "buyerPhone": "...",
-  "product": "Fritadeira Air Fryer Mondial AFON-12L-BI",
+  "product": "Kit Panelas",
   "gateway": "legacy"
 }`}</pre>
             </Card>

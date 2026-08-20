@@ -11,11 +11,17 @@ import { createDraftOrder } from "@/lib/admin/orders.server";
 import { fireFacebookCAPI } from "@/lib/admin/facebook-pixel.server";
 import {
   getPixelConfig,
+  getWebhooks,
   readStore,
   savePixelConfig,
   saveWebhooks,
   trackAnalyticsEvent,
 } from "@/lib/admin/store.server";
+import {
+  getWebhookPersistenceHint,
+  saveWebhooksConfig,
+} from "@/lib/admin/config.server";
+import { testWebhookDelivery } from "@/lib/admin/webhooks.server";
 import type { CheckoutStep, FacebookPixelEntry, PixelConfig, WebhookEntry } from "@/lib/admin/types.server";
 
 const tokenSchema = z.object({ token: z.string().min(1) });
@@ -111,7 +117,10 @@ export const adminGetWebhooks = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema)
   .handler(async ({ data }) => {
     assertAdmin(data.token);
-    return { webhooks: readStore().webhooks };
+    return {
+      webhooks: getWebhooks(),
+      persistenceHint: getWebhookPersistenceHint(),
+    };
   });
 
 export const adminSaveWebhooks = createServerFn({ method: "POST" })
@@ -131,8 +140,30 @@ export const adminSaveWebhooks = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     assertAdmin(data.token);
-    const webhooks = saveWebhooks(data.webhooks as WebhookEntry[]);
-    return { webhooks };
+    const saved = await saveWebhooksConfig(data.webhooks as WebhookEntry[]);
+    saveWebhooks(saved.webhooks);
+    return {
+      webhooks: saved.webhooks,
+      persistedTo: saved.persistedTo,
+      persistenceHint: getWebhookPersistenceHint(),
+    };
+  });
+
+export const adminTestWebhook = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      token: z.string().min(1),
+      url: z.string().url(),
+      event: z.enum(["venda_pendente", "venda_aprovada"]).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.token);
+    const result = await testWebhookDelivery(data.url, data.event ?? "venda_pendente");
+    if (!result.ok) {
+      throw new Error(result.error ?? `Webhook retornou status ${result.status ?? "erro"}`);
+    }
+    return { ok: true, status: result.status };
   });
 
 export const adminGetAnalytics = createServerFn({ method: "POST" })
