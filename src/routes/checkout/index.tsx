@@ -183,9 +183,16 @@ function CheckoutPage() {
     setSubmitError(null);
     try {
       const result = await createPixPayment({ data: { ...data, sessionId } });
+      void import("@/lib/facebook-pixel-browser").then((m) => {
+        m.saveCheckoutBuyer({ name: data.name, email: data.email, phone: data.phone });
+      });
       await navigate({
         to: "/checkout/pix",
-        search: { paymentId: result.paymentId },
+        search: {
+          paymentId: result.paymentId,
+          orderId: result.orderId,
+          amount: result.amount,
+        },
       });
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Erro ao iniciar pagamento.");

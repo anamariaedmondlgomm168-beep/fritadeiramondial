@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 
 import {
@@ -18,7 +19,10 @@ import {
   trackAnalyticsEvent,
 } from "@/lib/admin/store.server";
 import {
+  getAdminPersistenceHint,
+  getEffectivePixelConfig,
   getWebhookPersistenceHint,
+  savePixelConfigPersistent,
   saveWebhooksConfig,
 } from "@/lib/admin/config.server";
 import { testWebhookDelivery } from "@/lib/admin/webhooks.server";
@@ -248,7 +252,10 @@ export const adminGetPixels = createServerFn({ method: "POST" })
   .inputValidator(tokenSchema)
   .handler(async ({ data }) => {
     assertAdmin(data.token);
-    return { pixelConfig: getPixelConfig() };
+    return {
+      pixelConfig: getPixelConfig(),
+      persistenceHint: getAdminPersistenceHint(),
+    };
   });
 
 export const adminSavePixels = createServerFn({ method: "POST" })
@@ -262,16 +269,31 @@ export const adminSavePixels = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     assertAdmin(data.token);
-    const pixelConfig = savePixelConfig(data.pixelConfig as PixelConfig);
-    return { pixelConfig };
+    const saved = await savePixelConfigPersistent(data.pixelConfig as PixelConfig);
+    savePixelConfig(saved.pixelConfig);
+    return {
+      pixelConfig: saved.pixelConfig,
+      persistedTo: saved.persistedTo,
+      persistenceHint: getAdminPersistenceHint(),
+    };
   });
 
 export const getPublicPixels = createServerFn({ method: "GET" }).handler(async () => {
-  const pixels = getPixelConfig().facebookPixels
-    .filter((p) => p.active && p.pixelId.trim())
-    .map((p) => ({ id: p.id, pixelId: p.pixelId.trim() }));
-  return { facebookPixels: pixels };
+  const pixelConfig = await getEffectivePixelConfig();
+  const facebookPixels = pixelConfig.facebookPixels
+    .filter((pixel) => pixel.active && pixel.pixelId.trim())
+    .map((pixel) => ({ id: pixel.id, pixelId: pixel.pixelId.trim() }));
+  return { facebookPixels };
 });
+
+function resolveClientIp(): string | undefined {
+  const forwarded = getRequestHeader("x-forwarded-for");
+  if (forwarded) {
+    const ip = forwarded.split(",")[0]?.trim();
+    if (ip) return ip;
+  }
+  return getRequestHeader("x-real-ip")?.trim();
+}
 
 export const fireFacebookConversion = createServerFn({ method: "POST" })
   .inputValidator(
@@ -287,6 +309,9 @@ export const fireFacebookConversion = createServerFn({ method: "POST" })
           name: z.string().optional(),
         })
         .optional(),
+      fbp: z.string().optional(),
+      fbc: z.string().optional(),
+      clientUserAgent: z.string().optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -300,6 +325,10 @@ export const fireFacebookConversion = createServerFn({ method: "POST" })
         buyerPhone: data.userData?.phone,
         buyerName: data.userData?.name,
       },
+      fbp: data.fbp,
+      fbc: data.fbc,
+      clientIp: resolveClientIp(),
+      clientUserAgent: data.clientUserAgent ?? getRequestHeader("user-agent") ?? undefined,
     });
     return { ok: true };
   });

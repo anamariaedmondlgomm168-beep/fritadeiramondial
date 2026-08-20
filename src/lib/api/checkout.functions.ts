@@ -36,19 +36,22 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const result = await gateway.createPixPayment(checkoutData);
     const gatewayName = getActiveGatewayName();
 
+    let orderId: string | undefined;
     try {
-      await registerPendingOrder({
+      const order = await registerPendingOrder({
         data: checkoutData,
         paymentId: result.paymentId,
         gateway: gatewayName,
         sessionId,
       });
+      orderId = order.id;
     } catch (err) {
       console.error("Failed to register pending order:", err);
     }
 
     return {
       ...result,
+      orderId,
       demoMode: isDemoMode(),
       gateway: gatewayName,
     };

@@ -10,7 +10,6 @@ import type {
   PixelConfig,
   WebhookEntry,
 } from "./types.server";
-import { getStoredWebhooksSync, saveWebhooksConfig } from "./config.server";
 
 const STORE_PATH = join(process.cwd(), ".data", "admin-store.json");
 
@@ -147,24 +146,17 @@ export function saveWebhooks(webhooks: WebhookEntry[]): WebhookEntry[] {
 }
 
 export function getWebhooks(): WebhookEntry[] {
-  const stored = getStoredWebhooksSync();
-  if (stored.length > 0) return stored;
-  return readStore().webhooks;
+  return getWebhooksForAdmin();
 }
 
 export function getPixelConfig(): PixelConfig {
-  return readStore().pixelConfig;
+  return getPixelConfigForAdmin();
 }
 
 export function savePixelConfig(pixelConfig: PixelConfig): PixelConfig {
   mutateStore((store) => {
     store.pixelConfig = pixelConfig;
   });
+  void savePixelConfigPersistent(pixelConfig);
   return pixelConfig;
-}
-
-export function getActiveFacebookPixels(): FacebookPixelEntry[] {
-  return getPixelConfig().facebookPixels.filter(
-    (p) => p.active && p.pixelId.trim(),
-  );
 }

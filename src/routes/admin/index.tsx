@@ -161,6 +161,7 @@ function AdminPage() {
       setWebhooks(wh.webhooks);
       setWebhookPersistenceHint(wh.persistenceHint ?? "");
       setFacebookPixels(px.pixelConfig.facebookPixels);
+      setWebhookPersistenceHint(px.persistenceHint ?? "");
       setAnalytics(an);
     } catch {
       flash("Erro ao carregar dados.");
@@ -186,7 +187,9 @@ function AdminPage() {
         data: { token, pixelConfig: { facebookPixels } },
       });
       setFacebookPixels(res.pixelConfig.facebookPixels);
-      flash("Pixels salvos!");
+      setWebhookPersistenceHint(res.persistenceHint ?? "");
+      const where = res.persistedTo?.join(", ") ?? "memoria";
+      flash(`Pixels salvos (${where})!`);
     } catch {
       flash("Erro ao salvar pixels.");
     } finally {

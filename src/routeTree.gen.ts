@@ -10,10 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as CheckoutPixRouteImport } from './routes/checkout/pix'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
+import { Route as CheckoutPixRouteImport } from './routes/checkout/pix'
 import { Route as ApiWebhooksLegacyRouteImport } from './routes/api/webhooks/legacy'
 
 const IndexRoute = IndexRouteImport.update({
@@ -21,24 +21,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
-  id: '/checkout/',
-  path: '/checkout/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CheckoutPixRoute = CheckoutPixRouteImport.update({
-  id: '/checkout/pix',
-  path: '/checkout/pix',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
+  id: '/checkout/',
+  path: '/checkout/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutPixRoute = CheckoutPixRouteImport.update({
+  id: '/checkout/pix',
+  path: '/checkout/pix',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiWebhooksLegacyRoute = ApiWebhooksLegacyRouteImport.update({
@@ -117,13 +117,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/checkout/': {
-      id: '/checkout/'
-      path: '/checkout'
-      fullPath: '/checkout/'
-      preLoaderRoute: typeof CheckoutIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
@@ -131,18 +124,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/checkout/pix': {
-      id: '/checkout/pix'
-      path: '/checkout/pix'
-      fullPath: '/checkout/pix'
-      preLoaderRoute: typeof CheckoutPixRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/login': {
       id: '/admin/login'
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/': {
+      id: '/checkout/'
+      path: '/checkout'
+      fullPath: '/checkout/'
+      preLoaderRoute: typeof CheckoutIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/pix': {
+      id: '/checkout/pix'
+      path: '/checkout/pix'
+      fullPath: '/checkout/pix'
+      preLoaderRoute: typeof CheckoutPixRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/webhooks/legacy': {

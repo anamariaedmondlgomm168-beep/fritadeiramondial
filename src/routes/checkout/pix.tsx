@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 
 const pixSearchSchema = z.object({
   paymentId: z.string().min(1),
+  orderId: z.string().optional(),
+  amount: z.coerce.number().optional(),
 });
 
 export const Route = createFileRoute("/checkout/pix")({
@@ -35,7 +37,7 @@ function qrImageSrc(qrCodeBase64?: string, qrCode?: string): string | undefined 
 }
 
 function PixPaymentPage() {
-  const { paymentId } = Route.useSearch();
+  const { paymentId, orderId, amount: searchAmount } = Route.useSearch();
   const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "cancelled">(
     "pending",
   );
@@ -47,6 +49,26 @@ function PixPaymentPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [simulating, setSimulating] = useState(false);
+
+  useEffect(() => {
+    if (!orderId) return;
+    void import("@/lib/facebook-pixel-browser").then((m) =>
+      m.trackInitiateCheckout({
+        orderId,
+        amount: searchAmount ?? amount ?? 69.9,
+      }),
+    );
+  }, [orderId, searchAmount, amount]);
+
+  useEffect(() => {
+    if (status !== "approved" || !paymentId) return;
+    void import("@/lib/facebook-pixel-browser").then((m) =>
+      m.trackPurchase({
+        paymentId,
+        amount: amount ?? searchAmount ?? 69.9,
+      }),
+    );
+  }, [status, paymentId, amount, searchAmount]);
 
   const refreshStatus = useCallback(async () => {
     try {

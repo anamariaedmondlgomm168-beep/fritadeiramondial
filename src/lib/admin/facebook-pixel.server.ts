@@ -1,19 +1,26 @@
 import { createHash } from "node:crypto";
 
 import { PRODUCT } from "@/lib/checkout/constants";
+import { checkoutEventId, purchaseEventId } from "@/lib/facebook-pixel-events";
 
-import { getActiveFacebookPixels } from "./store.server";
+import { getActiveFacebookPixels } from "./config.server";
 import type { AdminOrder } from "./types.server";
 
 function hashSha256(value: string): string {
   return createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
 }
 
-function buildUserData(order?: Partial<AdminOrder>) {
+function buildUserData(
+  order?: Partial<AdminOrder>,
+  extra?: {
+    fbp?: string;
+    fbc?: string;
+    clientIp?: string;
+    clientUserAgent?: string;
+  },
+) {
   const userData: Record<string, unknown> = {};
-  if (order?.buyerEmail) {
-    userData.em = [hashSha256(order.buyerEmail)];
-  }
+  if (order?.buyerEmail) userData.em = [hashSha256(order.buyerEmail)];
   if (order?.buyerPhone) {
     const digits = order.buyerPhone.replace(/\D/g, "");
     const phone = digits.startsWith("55") ? digits : `55${digits}`;
@@ -24,6 +31,10 @@ function buildUserData(order?: Partial<AdminOrder>) {
     if (parts[0]) userData.fn = [hashSha256(parts[0])];
     if (parts.length > 1) userData.ln = [hashSha256(parts[parts.length - 1])];
   }
+  if (extra?.fbp) userData.fbp = extra.fbp;
+  if (extra?.fbc) userData.fbc = extra.fbc;
+  if (extra?.clientIp) userData.client_ip_address = extra.clientIp;
+  if (extra?.clientUserAgent) userData.client_user_agent = extra.clientUserAgent;
   return userData;
 }
 
@@ -33,11 +44,21 @@ export async function fireFacebookCAPI(input: {
   sourceUrl?: string;
   customData?: Record<string, unknown>;
   order?: Partial<AdminOrder>;
+  fbp?: string;
+  fbc?: string;
+  clientIp?: string;
+  clientUserAgent?: string;
 }): Promise<void> {
-  const pixels = getActiveFacebookPixels().filter((p) => p.accessToken.trim());
+  const pixels = (await getActiveFacebookPixels()).filter((pixel) => pixel.accessToken.trim());
   if (pixels.length === 0) return;
 
-  const userData = buildUserData(input.order);
+  const userData = buildUserData(input.order, {
+    fbp: input.fbp,
+    fbc: input.fbc,
+    clientIp: input.clientIp,
+    clientUserAgent: input.clientUserAgent,
+  });
+
   const customData = {
     currency: "BRL",
     content_name: PRODUCT.name,
@@ -84,7 +105,7 @@ export async function fireFacebookCAPI(input: {
 export async function fireFacebookPurchase(order: AdminOrder): Promise<void> {
   await fireFacebookCAPI({
     eventName: "Purchase",
-    eventId: `purchase_${order.paymentId ?? order.id}`,
+    eventId: purchaseEventId(order.paymentId ?? order.id),
     customData: {
       value: order.amountCents / 100,
       currency: "BRL",
@@ -95,9 +116,10 @@ export async function fireFacebookPurchase(order: AdminOrder): Promise<void> {
 }
 
 export async function fireFacebookInitiateCheckout(order: Partial<AdminOrder>): Promise<void> {
+  if (!order.id) return;
   await fireFacebookCAPI({
     eventName: "InitiateCheckout",
-    eventId: `checkout_${order.id ?? Date.now()}`,
+    eventId: checkoutEventId(order.id),
     customData: {
       value: (order.amountCents ?? 0) / 100,
       currency: "BRL",
