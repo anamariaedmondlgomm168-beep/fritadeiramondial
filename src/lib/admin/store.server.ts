@@ -6,10 +6,15 @@ import type {
   AdminOrder,
   AdminStore,
   AnalyticsEvent,
-  FacebookPixelEntry,
   PixelConfig,
   WebhookEntry,
 } from "./types.server";
+import {
+  getPixelConfigForAdmin,
+  getWebhooksForAdmin,
+  savePixelConfigPersistent,
+  saveWebhooksConfig,
+} from "./config.server";
 
 const STORE_PATH = join(process.cwd(), ".data", "admin-store.json");
 
