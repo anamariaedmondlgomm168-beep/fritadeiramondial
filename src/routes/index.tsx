@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -103,9 +103,17 @@ function formatTime(s: number) {
 }
 
 function ProductPage() {
+  const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [voltage, setVoltage] = useState<"127V" | "220V" | null>(null);
   const [seconds, setSeconds] = useState(59 * 60 + 56);
+
+  const goToCheckout = () => {
+    navigate({
+      to: "/checkout",
+      search: voltage ? { voltage } : {},
+    });
+  };
 
   useEffect(() => {
     const t = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
@@ -402,16 +410,14 @@ function ProductPage() {
             <MessageCircle className="h-5 w-5" />
             Chat
           </button>
-          <button className="ml-1 flex-1 rounded-full border border-neutral-900 py-2.5 text-center text-sm font-semibold">
-            Adicionar ao carrinho
-          </button>
-          <a
-            href="https://pay.siibionics.shop/YEwR3A0vqypgdKy"
-            className="flex-1 rounded-full bg-rose-500 py-2.5 text-center text-sm font-semibold text-white"
+          <button
+            type="button"
+            onClick={goToCheckout}
+            className="ml-1 flex-1 rounded-full bg-rose-500 py-2.5 text-center text-sm font-semibold text-white"
           >
             Comprar agora
             <div className="text-[11px] font-normal opacity-90">R$ 69,90</div>
-          </a>
+          </button>
         </div>
       </div>
     </div>

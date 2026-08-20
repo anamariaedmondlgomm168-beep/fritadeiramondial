@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
+import { Route as CheckoutPixRouteImport } from './routes/checkout/pix'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
+  id: '/checkout/',
+  path: '/checkout/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutPixRoute = CheckoutPixRouteImport.update({
+  id: '/checkout/pix',
+  path: '/checkout/pix',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/checkout/pix': typeof CheckoutPixRoute
+  '/checkout/': typeof CheckoutIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/checkout/pix': typeof CheckoutPixRoute
+  '/checkout': typeof CheckoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/checkout/pix': typeof CheckoutPixRoute
+  '/checkout/': typeof CheckoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/checkout/pix' | '/checkout/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/checkout/pix' | '/checkout'
+  id: '__root__' | '/' | '/checkout/pix' | '/checkout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CheckoutPixRoute: typeof CheckoutPixRoute
+  CheckoutIndexRoute: typeof CheckoutIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,12 +68,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/': {
+      id: '/checkout/'
+      path: '/checkout'
+      fullPath: '/checkout/'
+      preLoaderRoute: typeof CheckoutIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/pix': {
+      id: '/checkout/pix'
+      path: '/checkout/pix'
+      fullPath: '/checkout/pix'
+      preLoaderRoute: typeof CheckoutPixRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CheckoutPixRoute: CheckoutPixRoute,
+  CheckoutIndexRoute: CheckoutIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
