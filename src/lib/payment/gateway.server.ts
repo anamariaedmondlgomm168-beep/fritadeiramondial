@@ -50,6 +50,28 @@ function createDemoGateway(): PaymentGateway {
   };
 }
 
+function isPublicWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    const host = parsed.hostname.toLowerCase();
+    return host !== "localhost" && host !== "127.0.0.1" && !host.endsWith(".local");
+  } catch {
+    return false;
+  }
+}
+
+function resolveLegacyWebhookUrl(): string | undefined {
+  const explicit = process.env.LEGACY_WEBHOOK_URL?.trim();
+  if (explicit && isPublicWebhookUrl(explicit)) return explicit;
+
+  const publicAppUrl = process.env.PUBLIC_APP_URL?.trim();
+  if (!publicAppUrl) return undefined;
+
+  const derived = `${publicAppUrl.replace(/\/$/, "")}/api/webhooks/legacy`;
+  return isPublicWebhookUrl(derived) ? derived : undefined;
+}
+
 function hasLegacyCredentials(): boolean {
   return Boolean(
     process.env.LEGACY_PUBLIC_KEY?.trim() && process.env.LEGACY_SECRET_KEY?.trim(),
@@ -77,14 +99,9 @@ export function getPaymentGateway(options?: {
   const secretKey = process.env.LEGACY_SECRET_KEY?.trim();
 
   if (publicKey && secretKey) {
-    const publicAppUrl = process.env.PUBLIC_APP_URL?.trim();
-    const webhookUrl =
-      process.env.LEGACY_WEBHOOK_URL?.trim() ||
-      (publicAppUrl ? `${publicAppUrl.replace(/\/$/, "")}/api/webhooks/legacy` : undefined);
-
     return createLegacyGateway(
       { publicKey, secretKey },
-      { webhookUrl, payerIp: options?.payerIp },
+      { webhookUrl: resolveLegacyWebhookUrl(), payerIp: options?.payerIp },
     );
   }
 

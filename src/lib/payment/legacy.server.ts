@@ -123,6 +123,7 @@ async function legacyFetch(
 
 function parseLegacyError(body: Record<string, unknown>, fallback: string): string {
   if (typeof body.message === "string") return body.message;
+  if (Array.isArray(body.message)) return body.message.map(String).join(", ");
   if (typeof body.error === "string") return body.error;
   if (typeof body.code === "string") return body.code;
   return fallback;
@@ -139,11 +140,10 @@ export function createLegacyGateway(
       );
       const referenceId = randomUUID();
 
-      const payload = {
+      const payload: Record<string, unknown> = {
         paymentMethod: "PIX",
         amount: amountCents,
         referenceId,
-        webhookUrl: options?.webhookUrl,
         isPhysicalProduct: true,
         payerIp: options?.payerIp ?? "127.0.0.1",
         customer: {
@@ -165,6 +165,10 @@ export function createLegacyGateway(
         },
         items: buildItems(input, amountCents),
       };
+
+      if (options?.webhookUrl) {
+        payload.webhookUrl = options.webhookUrl;
+      }
 
       const response = await legacyFetch(credentials, "/payin", {
         method: "POST",

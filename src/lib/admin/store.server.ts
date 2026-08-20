@@ -22,16 +22,32 @@ const EMPTY_STORE: AdminStore = {
   pixelConfig: EMPTY_PIXEL_CONFIG,
 };
 
+let memoryStore: AdminStore | null = null;
+let useMemoryStore = false;
+
+function cloneStore(store: AdminStore): AdminStore {
+  return structuredClone(store);
+}
+
 function ensureStoreFile(): void {
-  const dir = dirname(STORE_PATH);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  if (!existsSync(STORE_PATH)) {
-    writeFileSync(STORE_PATH, JSON.stringify(EMPTY_STORE, null, 2), "utf-8");
+  if (useMemoryStore) return;
+  try {
+    const dir = dirname(STORE_PATH);
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    if (!existsSync(STORE_PATH)) {
+      writeFileSync(STORE_PATH, JSON.stringify(EMPTY_STORE, null, 2), "utf-8");
+    }
+  } catch {
+    useMemoryStore = true;
+    if (!memoryStore) memoryStore = cloneStore(EMPTY_STORE);
   }
 }
 
 export function readStore(): AdminStore {
   ensureStoreFile();
+  if (useMemoryStore) {
+    return cloneStore(memoryStore ?? EMPTY_STORE);
+  }
   try {
     const raw = readFileSync(STORE_PATH, "utf-8");
     const parsed = JSON.parse(raw) as Partial<AdminStore>;
@@ -42,13 +58,24 @@ export function readStore(): AdminStore {
       pixelConfig: parsed.pixelConfig ?? EMPTY_PIXEL_CONFIG,
     };
   } catch {
-    return { ...EMPTY_STORE };
+    useMemoryStore = true;
+    if (!memoryStore) memoryStore = cloneStore(EMPTY_STORE);
+    return cloneStore(memoryStore);
   }
 }
 
 export function writeStore(store: AdminStore): void {
   ensureStoreFile();
-  writeFileSync(STORE_PATH, JSON.stringify(store, null, 2), "utf-8");
+  if (useMemoryStore) {
+    memoryStore = cloneStore(store);
+    return;
+  }
+  try {
+    writeFileSync(STORE_PATH, JSON.stringify(store, null, 2), "utf-8");
+  } catch {
+    useMemoryStore = true;
+    memoryStore = cloneStore(store);
+  }
 }
 
 export function mutateStore(mutator: (store: AdminStore) => void): AdminStore {
