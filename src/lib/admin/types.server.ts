@@ -50,8 +50,21 @@ export interface AnalyticsEvent {
   createdAt: string;
 }
 
+export interface FacebookPixelEntry {
+  id: string;
+  pixelId: string;
+  accessToken: string;
+  active: boolean;
+  label?: string;
+}
+
+export interface PixelConfig {
+  facebookPixels: FacebookPixelEntry[];
+}
+
 export interface AdminStore {
   orders: AdminOrder[];
   webhooks: WebhookEntry[];
   analytics: AnalyticsEvent[];
+  pixelConfig: PixelConfig;
 }

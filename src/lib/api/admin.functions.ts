@@ -8,8 +8,15 @@ import {
   verifyAdminToken,
 } from "@/lib/admin/auth.server";
 import { createDraftOrder } from "@/lib/admin/orders.server";
-import { readStore, saveWebhooks, trackAnalyticsEvent } from "@/lib/admin/store.server";
-import type { CheckoutStep, WebhookEntry } from "@/lib/admin/types.server";
+import { fireFacebookCAPI } from "@/lib/admin/facebook-pixel.server";
+import {
+  getPixelConfig,
+  readStore,
+  savePixelConfig,
+  saveWebhooks,
+  trackAnalyticsEvent,
+} from "@/lib/admin/store.server";
+import type { CheckoutStep, FacebookPixelEntry, PixelConfig, WebhookEntry } from "@/lib/admin/types.server";
 
 const tokenSchema = z.object({ token: z.string().min(1) });
 
@@ -195,4 +202,73 @@ export const trackCheckoutStep = createServerFn({ method: "POST" })
       partial: data.partial,
     });
     return { sessionId: order.id };
+  });
+
+
+const facebookPixelSchema = z.object({
+  id: z.string(),
+  pixelId: z.string(),
+  accessToken: z.string(),
+  active: z.boolean(),
+  label: z.string().optional(),
+});
+
+export const adminGetPixels = createServerFn({ method: "POST" })
+  .inputValidator(tokenSchema)
+  .handler(async ({ data }) => {
+    assertAdmin(data.token);
+    return { pixelConfig: getPixelConfig() };
+  });
+
+export const adminSavePixels = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      token: z.string().min(1),
+      pixelConfig: z.object({
+        facebookPixels: z.array(facebookPixelSchema),
+      }),
+    }),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.token);
+    const pixelConfig = savePixelConfig(data.pixelConfig as PixelConfig);
+    return { pixelConfig };
+  });
+
+export const getPublicPixels = createServerFn({ method: "GET" }).handler(async () => {
+  const pixels = getPixelConfig().facebookPixels
+    .filter((p) => p.active && p.pixelId.trim())
+    .map((p) => ({ id: p.id, pixelId: p.pixelId.trim() }));
+  return { facebookPixels: pixels };
+});
+
+export const fireFacebookConversion = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      eventName: z.string().min(1),
+      eventId: z.string().min(1),
+      sourceUrl: z.string().optional(),
+      customData: z.record(z.unknown()).optional(),
+      userData: z
+        .object({
+          email: z.string().optional(),
+          phone: z.string().optional(),
+          name: z.string().optional(),
+        })
+        .optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await fireFacebookCAPI({
+      eventName: data.eventName,
+      eventId: data.eventId,
+      sourceUrl: data.sourceUrl,
+      customData: data.customData,
+      order: {
+        buyerEmail: data.userData?.email,
+        buyerPhone: data.userData?.phone,
+        buyerName: data.userData?.name,
+      },
+    });
+    return { ok: true };
   });

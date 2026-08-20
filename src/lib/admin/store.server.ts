@@ -2,11 +2,25 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { randomUUID } from "node:crypto";
 
-import type { AdminOrder, AdminStore, AnalyticsEvent, WebhookEntry } from "./types.server";
+import type {
+  AdminOrder,
+  AdminStore,
+  AnalyticsEvent,
+  FacebookPixelEntry,
+  PixelConfig,
+  WebhookEntry,
+} from "./types.server";
 
 const STORE_PATH = join(process.cwd(), ".data", "admin-store.json");
 
-const EMPTY_STORE: AdminStore = { orders: [], webhooks: [], analytics: [] };
+const EMPTY_PIXEL_CONFIG: PixelConfig = { facebookPixels: [] };
+
+const EMPTY_STORE: AdminStore = {
+  orders: [],
+  webhooks: [],
+  analytics: [],
+  pixelConfig: EMPTY_PIXEL_CONFIG,
+};
 
 function ensureStoreFile(): void {
   const dir = dirname(STORE_PATH);
@@ -25,6 +39,7 @@ export function readStore(): AdminStore {
       orders: parsed.orders ?? [],
       webhooks: parsed.webhooks ?? [],
       analytics: parsed.analytics ?? [],
+      pixelConfig: parsed.pixelConfig ?? EMPTY_PIXEL_CONFIG,
     };
   } catch {
     return { ...EMPTY_STORE };
@@ -100,4 +115,21 @@ export function saveWebhooks(webhooks: WebhookEntry[]): WebhookEntry[] {
     store.webhooks = webhooks;
   });
   return webhooks;
+}
+
+export function getPixelConfig(): PixelConfig {
+  return readStore().pixelConfig;
+}
+
+export function savePixelConfig(pixelConfig: PixelConfig): PixelConfig {
+  mutateStore((store) => {
+    store.pixelConfig = pixelConfig;
+  });
+  return pixelConfig;
+}
+
+export function getActiveFacebookPixels(): FacebookPixelEntry[] {
+  return getPixelConfig().facebookPixels.filter(
+    (p) => p.active && p.pixelId.trim(),
+  );
 }

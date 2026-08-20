@@ -1,4 +1,5 @@
 import { trackProductView } from "@/lib/api/admin.functions";
+import { PRODUCT } from "@/lib/checkout/constants";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
@@ -106,6 +107,15 @@ function formatTime(s: number) {
 function ProductPage() {
   useEffect(() => {
     void trackProductView({ data: {} });
+    void import("@/lib/facebook-pixel-browser").then((m) =>
+      m.trackFacebookEvent("ViewContent", {
+        content_name: PRODUCT.name,
+        content_ids: [PRODUCT.id],
+        content_type: "product",
+        value: PRODUCT.price,
+        currency: "BRL",
+      }),
+    );
   }, []);
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);

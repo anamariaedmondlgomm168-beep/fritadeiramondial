@@ -18,6 +18,7 @@ export interface OrderBump {
   price: number;
   compareAt?: number;
   image?: string;
+  badge?: string;
 }
 
 export const PRODUCT = {
@@ -46,28 +47,34 @@ export const SHIPPING_OPTIONS: ShippingOption[] = [
   },
 ];
 
-/** Order bumps - edite aqui quando enviar as 3 ofertas */
 export const ORDER_BUMPS: OrderBump[] = [
   {
-    id: "offer-1",
-    enabled: false,
-    title: "Oferta 1",
-    description: "Aguardando configuração",
-    price: 0,
+    id: "offer-oxford-jantar",
+    enabled: true,
+    title: "Jogo de Jantar 10 Peças Oxford Ryo Maresia",
+    description: "Porcelana premium para sua mesa",
+    price: 46.2,
+    compareAt: 189.9,
+    image: "/order-bumps/oxford-ryo-maresia.png",
   },
   {
-    id: "offer-2",
-    enabled: false,
-    title: "Oferta 2",
-    description: "Aguardando configuração",
-    price: 0,
+    id: "offer-potes-vidro",
+    enabled: true,
+    title: "Kit 10 Potes de Vidro Herméticos Colinox",
+    description: "Organize sua cozinha com praticidade",
+    price: 36.45,
+    compareAt: 139.9,
+    image: "/order-bumps/potes-vidro.png",
   },
   {
-    id: "offer-3",
-    enabled: false,
-    title: "Oferta 3",
-    description: "Aguardando configuração",
-    price: 0,
+    id: "offer-panela-pressao",
+    enabled: true,
+    title: "Panela de Pressão Colinox Antiaderente 4,2L",
+    description: "Cozinhe mais rápido com segurança",
+    price: 48.99,
+    compareAt: 219.9,
+    image: "/order-bumps/panela-pressao.png",
+    badge: "MAIS VENDIDA",
   },
 ];
 

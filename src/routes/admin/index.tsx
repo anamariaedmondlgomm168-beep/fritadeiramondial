@@ -5,6 +5,7 @@ import {
   Bell,
   CheckCircle,
   Clock,
+  Code,
   Copy,
   DollarSign,
   Eye,
@@ -35,11 +36,13 @@ import {
   adminGetAnalytics,
   adminGetDashboard,
   adminGetOrders,
+  adminGetPixels,
   adminGetWebhooks,
+  adminSavePixels,
   adminSaveWebhooks,
   adminVerify,
 } from "@/lib/api/admin.functions";
-import type { AdminOrder, WebhookEntry } from "@/lib/admin/types.server";
+import type { AdminOrder, FacebookPixelEntry, WebhookEntry } from "@/lib/admin/types.server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -54,13 +57,14 @@ export const Route = createFileRoute("/admin/")({
   component: AdminPage,
 });
 
-type Tab = "dashboard" | "live" | "pedidos" | "webhooks" | "analytics";
+type Tab = "dashboard" | "live" | "pedidos" | "webhooks" | "pixels" | "analytics";
 
 const TABS: { id: Tab; label: string; icon: typeof BarChart3 }[] = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
   { id: "live", label: "Live View", icon: Activity },
   { id: "pedidos", label: "Pedidos", icon: Package },
   { id: "webhooks", label: "Webhooks", icon: Bell },
+  { id: "pixels", label: "Pixels", icon: Code },
   { id: "analytics", label: "Analises", icon: TrendingUp },
 ];
 
@@ -114,6 +118,8 @@ function AdminPage() {
   const [webhooks, setWebhooks] = useState<WebhookEntry[]>([]);
   const [analytics, setAnalytics] = useState<Awaited<ReturnType<typeof adminGetAnalytics>> | null>(null);
   const [savingWebhooks, setSavingWebhooks] = useState(false);
+  const [facebookPixels, setFacebookPixels] = useState<FacebookPixelEntry[]>([]);
+  const [savingPixels, setSavingPixels] = useState(false);
 
   const flash = (m: string) => {
     setMessage(m);
@@ -140,15 +146,17 @@ function AdminPage() {
     if (!token) return;
     if (!silent) setRefreshing(true);
     try {
-      const [dash, ords, wh, an] = await Promise.all([
+      const [dash, ords, wh, px, an] = await Promise.all([
         adminGetDashboard({ data: { token } }),
         adminGetOrders({ data: { token, status: "all" } }),
         adminGetWebhooks({ data: { token } }),
+        adminGetPixels({ data: { token } }),
         adminGetAnalytics({ data: { token } }),
       ]);
       setDashboard(dash);
       setOrders(ords.orders);
       setWebhooks(wh.webhooks);
+      setFacebookPixels(px.pixelConfig.facebookPixels);
       setAnalytics(an);
     } catch {
       flash("Erro ao carregar dados.");
@@ -164,6 +172,44 @@ function AdminPage() {
     const id = window.setInterval(() => void loadData(true), 15000);
     return () => window.clearInterval(id);
   }, [token, loadData]);
+
+
+  const handleSavePixels = async () => {
+    if (!token) return;
+    setSavingPixels(true);
+    try {
+      const res = await adminSavePixels({
+        data: { token, pixelConfig: { facebookPixels } },
+      });
+      setFacebookPixels(res.pixelConfig.facebookPixels);
+      flash("Pixels salvos!");
+    } catch {
+      flash("Erro ao salvar pixels.");
+    } finally {
+      setSavingPixels(false);
+    }
+  };
+
+  const addFacebookPixel = () => {
+    setFacebookPixels((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        pixelId: "",
+        accessToken: "",
+        active: true,
+        label: "Facebook",
+      },
+    ]);
+  };
+
+  const updateFacebookPixel = (id: string, patch: Partial<FacebookPixelEntry>) => {
+    setFacebookPixels((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  };
+
+  const removeFacebookPixel = (id: string) => {
+    setFacebookPixels((prev) => prev.filter((p) => p.id !== id));
+  };
 
   const handleLogout = () => {
     clearAdminToken();
@@ -468,6 +514,110 @@ function AdminPage() {
   "product": "Fritadeira Air Fryer Mondial AFON-12L-BI",
   "gateway": "legacy"
 }`}</pre>
+            </Card>
+          </div>
+        ) : null}
+
+
+        {tab === "pixels" ? (
+          <div className="space-y-4">
+            <Card className="border-neutral-800 bg-neutral-900 p-4">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-neutral-300">Pixel Facebook</h2>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    Configure o Pixel ID e o token de acesso (Conversions API).
+                  </p>
+                </div>
+                <Button size="sm" onClick={addFacebookPixel} className="bg-sky-500 hover:bg-sky-600">
+                  <Plus className="mr-1 h-4 w-4" /> Adicionar
+                </Button>
+              </div>
+
+              {facebookPixels.length === 0 ? (
+                <p className="py-6 text-center text-sm text-neutral-500">
+                  Nenhum pixel configurado. Adicione o Pixel ID e o token do Facebook.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {facebookPixels.map((pixel, index) => (
+                    <div key={pixel.id} className="rounded-xl border border-neutral-800 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <Input
+                          value={pixel.label ?? ""}
+                          onChange={(e) => updateFacebookPixel(pixel.id, { label: e.target.value })}
+                          placeholder={`Pixel ${index + 1}`}
+                          className="max-w-xs border-neutral-700 bg-neutral-800"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={pixel.active}
+                            onCheckedChange={(v) => updateFacebookPixel(pixel.id, { active: v })}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeFacebookPixel(pixel.id)}
+                            className="text-rose-400 hover:text-rose-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-neutral-400">
+                            Pixel ID
+                          </label>
+                          <Input
+                            value={pixel.pixelId}
+                            onChange={(e) => updateFacebookPixel(pixel.id, { pixelId: e.target.value })}
+                            placeholder="Ex: 123456789012345"
+                            className="border-neutral-700 bg-neutral-800 font-mono text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-neutral-400">
+                            Token de acesso (CAPI)
+                          </label>
+                          <Input
+                            type="password"
+                            value={pixel.accessToken}
+                            onChange={(e) =>
+                              updateFacebookPixel(pixel.id, { accessToken: e.target.value })
+                            }
+                            placeholder="EAAxxxxxxxx..."
+                            className="border-neutral-700 bg-neutral-800 font-mono text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                onClick={() => void handleSavePixels()}
+                disabled={savingPixels}
+                className="mt-4 bg-emerald-600 hover:bg-emerald-700"
+              >
+                {savingPixels ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Salvar pixels
+              </Button>
+            </Card>
+
+            <Card className="border-neutral-800 bg-neutral-900 p-4">
+              <h3 className="mb-2 text-sm font-semibold text-neutral-300">Eventos enviados</h3>
+              <ul className="space-y-1 text-xs text-neutral-400">
+                <li>• PageView — todas as paginas</li>
+                <li>• ViewContent — pagina do produto</li>
+                <li>• InitiateCheckout — PIX gerado (pendente)</li>
+                <li>• Purchase — venda aprovada</li>
+              </ul>
             </Card>
           </div>
         ) : null}

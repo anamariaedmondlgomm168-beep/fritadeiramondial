@@ -408,8 +408,11 @@ function CheckoutPage() {
 
           {enabledBumps.length > 0 ? (
             <section>
-              <SectionTitle>Ofertas especiais</SectionTitle>
-              <div className="mt-3 space-y-2">
+              <SectionTitle>Adicione essas ofertas na sua compra</SectionTitle>
+              <p className="mt-1 text-xs text-neutral-500">
+                Só hoje, com desconto exclusivo na sua compra.
+              </p>
+              <div className="mt-3 space-y-3">
                 {enabledBumps.map((bump) => (
                   <OrderBumpCard
                     key={bump.id}

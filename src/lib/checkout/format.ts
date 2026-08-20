@@ -47,3 +47,9 @@ export function isValidCpf(cpf: string): boolean {
   if (rest === 10) rest = 0;
   return rest === Number(digits[10]);
 }
+
+
+export function getDiscountPercent(price: number, compareAt?: number): number | null {
+  if (!compareAt || compareAt <= price) return null;
+  return Math.round(((compareAt - price) / compareAt) * 100);
+}

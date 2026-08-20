@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { calculateTotal } from "@/lib/checkout/constants";
 import type { CheckoutFormData } from "@/lib/checkout/schemas";
 
+import { fireFacebookInitiateCheckout, fireFacebookPurchase } from "./facebook-pixel.server";
 import { fireWebhookEvent } from "./webhooks.server";
 import {
   findOrderById,
@@ -105,6 +106,7 @@ export async function registerPendingOrder(input: {
   });
 
   await fireWebhookEvent("venda_pendente", order);
+  await fireFacebookInitiateCheckout(order);
   return order;
 }
 
@@ -128,5 +130,6 @@ export async function markOrderApproved(input: {
   });
 
   await fireWebhookEvent("venda_aprovada", existing);
+  await fireFacebookPurchase(existing);
   return existing;
 }
