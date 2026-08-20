@@ -70,7 +70,7 @@ export function createMercadoPagoGateway(accessToken: string): PaymentGateway {
 
       const payload = {
         transaction_amount: amount,
-        description: PRODUCT.name,
+        description: PRODUCT.gatewayName,
         payment_method_id: "pix",
         payer: {
           email: input.email,

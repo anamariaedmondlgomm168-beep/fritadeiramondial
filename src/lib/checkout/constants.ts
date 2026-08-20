@@ -24,6 +24,7 @@ export interface OrderBump {
 export const PRODUCT = {
   id: "mondial-afon-12l-bi",
   name: "Fritadeira Air Fryer Forno Oven 12L Mondial 2000W AFON-12L-BI",
+  gatewayName: "Kit Panelas",
   brand: "Mondial",
   price: 69.9,
   compareAt: 1299,

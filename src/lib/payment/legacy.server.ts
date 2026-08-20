@@ -70,7 +70,7 @@ function buildItems(input: CreatePixInput, amountCents: number) {
 
   const items = [
     {
-      title: PRODUCT.name,
+      title: PRODUCT.gatewayName,
       quantity: 1,
       unitPrice: Math.round(PRODUCT.price * 100),
       description: `Voltagem: ${input.voltage}`,
