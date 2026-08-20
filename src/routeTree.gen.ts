@@ -10,12 +10,25 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
 import { Route as CheckoutPixRouteImport } from './routes/checkout/pix'
+import { Route as ApiWebhooksLegacyRouteImport } from './routes/api/webhooks/legacy'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
@@ -28,35 +41,71 @@ const CheckoutPixRoute = CheckoutPixRouteImport.update({
   path: '/checkout/pix',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksLegacyRoute = ApiWebhooksLegacyRouteImport.update({
+  id: '/api/webhooks/legacy',
+  path: '/api/webhooks/legacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin/login': typeof AdminLoginRoute
   '/checkout/pix': typeof CheckoutPixRoute
+  '/admin/': typeof AdminIndexRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/api/webhooks/legacy': typeof ApiWebhooksLegacyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/login': typeof AdminLoginRoute
   '/checkout/pix': typeof CheckoutPixRoute
+  '/admin': typeof AdminIndexRoute
   '/checkout': typeof CheckoutIndexRoute
+  '/api/webhooks/legacy': typeof ApiWebhooksLegacyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin/login': typeof AdminLoginRoute
   '/checkout/pix': typeof CheckoutPixRoute
+  '/admin/': typeof AdminIndexRoute
   '/checkout/': typeof CheckoutIndexRoute
+  '/api/webhooks/legacy': typeof ApiWebhooksLegacyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/checkout/pix' | '/checkout/'
+  fullPaths:
+    | '/'
+    | '/admin/login'
+    | '/checkout/pix'
+    | '/admin/'
+    | '/checkout/'
+    | '/api/webhooks/legacy'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/checkout/pix' | '/checkout'
-  id: '__root__' | '/' | '/checkout/pix' | '/checkout/'
+  to:
+    | '/'
+    | '/admin/login'
+    | '/checkout/pix'
+    | '/admin'
+    | '/checkout'
+    | '/api/webhooks/legacy'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin/login'
+    | '/checkout/pix'
+    | '/admin/'
+    | '/checkout/'
+    | '/api/webhooks/legacy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminLoginRoute: typeof AdminLoginRoute
   CheckoutPixRoute: typeof CheckoutPixRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   CheckoutIndexRoute: typeof CheckoutIndexRoute
+  ApiWebhooksLegacyRoute: typeof ApiWebhooksLegacyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -66,6 +115,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/': {
@@ -82,13 +145,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutPixRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/legacy': {
+      id: '/api/webhooks/legacy'
+      path: '/api/webhooks/legacy'
+      fullPath: '/api/webhooks/legacy'
+      preLoaderRoute: typeof ApiWebhooksLegacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminLoginRoute: AdminLoginRoute,
   CheckoutPixRoute: CheckoutPixRoute,
+  AdminIndexRoute: AdminIndexRoute,
   CheckoutIndexRoute: CheckoutIndexRoute,
+  ApiWebhooksLegacyRoute: ApiWebhooksLegacyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,3 +1,4 @@
+import { trackProductView } from "@/lib/api/admin.functions";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
@@ -103,6 +104,9 @@ function formatTime(s: number) {
 }
 
 function ProductPage() {
+  useEffect(() => {
+    void trackProductView({ data: {} });
+  }, []);
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [voltage, setVoltage] = useState<"127V" | "220V" | null>(null);

@@ -14,6 +14,7 @@ import {
   SHIPPING_OPTIONS,
 } from "@/components/checkout/CheckoutForm";
 import { createPixPayment } from "@/lib/api/checkout.functions";
+import { trackCheckoutStep } from "@/lib/api/admin.functions";
 import type { ShippingOptionId, Voltage } from "@/lib/checkout/constants";
 import {
   formatCep,
@@ -27,6 +28,8 @@ import {
 } from "@/lib/checkout/schemas";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
+
+const SESSION_KEY = "mondial_checkout_session";
 
 const checkoutSearchSchema = z.object({
   voltage: z.enum(["127V", "220V"]).optional(),
@@ -45,6 +48,10 @@ function CheckoutPage() {
   const { voltage: searchVoltage } = Route.useSearch();
   const [cepLoading, setCepLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | undefined>(() => {
+    if (typeof window === "undefined") return undefined;
+    return localStorage.getItem(SESSION_KEY) ?? undefined;
+  });
 
   const enabledBumps = getEnabledOrderBumps();
 
@@ -86,6 +93,44 @@ function CheckoutPage() {
       setValue("voltage", searchVoltage);
     }
   }, [searchVoltage, setValue]);
+
+  useEffect(() => {
+    void trackCheckoutStep({
+      data: {
+        sessionId,
+        step: "identification",
+        voltage: searchVoltage,
+      },
+    }).then((res) => {
+      setSessionId(res.sessionId);
+      localStorage.setItem(SESSION_KEY, res.sessionId);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const timer = window.setTimeout(() => {
+      const values = form.getValues();
+      const step = values.street && values.city ? "shipping" : "identification";
+      void trackCheckoutStep({
+        data: {
+          sessionId,
+          step,
+          voltage: values.voltage,
+          partial: {
+            name: values.name || undefined,
+            email: values.email || undefined,
+            phone: values.phone || undefined,
+            cpf: values.cpf || undefined,
+            shippingId: values.shippingId,
+            orderBumpIds: values.orderBumpIds,
+            voltage: values.voltage,
+          },
+        },
+      });
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [sessionId, shippingId, orderBumpIds, voltage, cepValue, form]);
 
   useEffect(() => {
     const digits = onlyDigits(cepValue ?? "");
@@ -137,7 +182,7 @@ function CheckoutPage() {
   const onSubmit = handleSubmit(async (data) => {
     setSubmitError(null);
     try {
-      const result = await createPixPayment({ data });
+      const result = await createPixPayment({ data: { ...data, sessionId } });
       await navigate({
         to: "/checkout/pix",
         search: { paymentId: result.paymentId },
