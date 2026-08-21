@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as CheckoutIndexRouteImport } from './routes/checkout/index'
+import { Route as CheckoutObrigadoRouteImport } from './routes/checkout/obrigado'
 import { Route as CheckoutPixRouteImport } from './routes/checkout/pix'
 import { Route as ApiWebhooksLegacyRouteImport } from './routes/api/webhooks/legacy'
 
@@ -36,6 +37,11 @@ const CheckoutIndexRoute = CheckoutIndexRouteImport.update({
   path: '/checkout/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutObrigadoRoute = CheckoutObrigadoRouteImport.update({
+  id: '/checkout/obrigado',
+  path: '/checkout/obrigado',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutPixRoute = CheckoutPixRouteImport.update({
   id: '/checkout/pix',
   path: '/checkout/pix',
@@ -50,6 +56,7 @@ const ApiWebhooksLegacyRoute = ApiWebhooksLegacyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/login': typeof AdminLoginRoute
+  '/checkout/obrigado': typeof CheckoutObrigadoRoute
   '/checkout/pix': typeof CheckoutPixRoute
   '/admin/': typeof AdminIndexRoute
   '/checkout/': typeof CheckoutIndexRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/login': typeof AdminLoginRoute
+  '/checkout/obrigado': typeof CheckoutObrigadoRoute
   '/checkout/pix': typeof CheckoutPixRoute
   '/admin': typeof AdminIndexRoute
   '/checkout': typeof CheckoutIndexRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin/login': typeof AdminLoginRoute
+  '/checkout/obrigado': typeof CheckoutObrigadoRoute
   '/checkout/pix': typeof CheckoutPixRoute
   '/admin/': typeof AdminIndexRoute
   '/checkout/': typeof CheckoutIndexRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin/login'
+    | '/checkout/obrigado'
     | '/checkout/pix'
     | '/admin/'
     | '/checkout/'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin/login'
+    | '/checkout/obrigado'
     | '/checkout/pix'
     | '/admin'
     | '/checkout'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin/login'
+    | '/checkout/obrigado'
     | '/checkout/pix'
     | '/admin/'
     | '/checkout/'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  CheckoutObrigadoRoute: typeof CheckoutObrigadoRoute
   CheckoutPixRoute: typeof CheckoutPixRoute
   AdminIndexRoute: typeof AdminIndexRoute
   CheckoutIndexRoute: typeof CheckoutIndexRoute
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/obrigado': {
+      id: '/checkout/obrigado'
+      path: '/checkout/obrigado'
+      fullPath: '/checkout/obrigado'
+      preLoaderRoute: typeof CheckoutObrigadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/pix': {
       id: '/checkout/pix'
       path: '/checkout/pix'
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminLoginRoute: AdminLoginRoute,
+  CheckoutObrigadoRoute: CheckoutObrigadoRoute,
   CheckoutPixRoute: CheckoutPixRoute,
   AdminIndexRoute: AdminIndexRoute,
   CheckoutIndexRoute: CheckoutIndexRoute,

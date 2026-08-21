@@ -13,6 +13,7 @@ import {
   SectionTitle,
   SHIPPING_OPTIONS,
 } from "@/components/checkout/CheckoutForm";
+import { StorefrontLayout } from "@/components/storefront/StorefrontLayout";
 import { createPixPayment } from "@/lib/api/checkout.functions";
 import { trackCheckoutStep } from "@/lib/api/admin.functions";
 import type { ShippingOptionId, Voltage } from "@/lib/checkout/constants";
@@ -204,9 +205,8 @@ function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <div className="mx-auto max-w-[480px] pb-32">
-        <header className="flex items-center gap-3 border-b border-neutral-100 px-4 py-3">
+    <StorefrontLayout bottomPadding="pb-[max(4rem,env(safe-area-inset-bottom,0px))]">
+        <header className="flex items-center gap-3 border-b border-neutral-100 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
           <Link to="/" className="rounded-full p-1 hover:bg-neutral-100">
             <ArrowLeft className="h-6 w-6" />
           </Link>
@@ -435,26 +435,22 @@ function CheckoutPage() {
           {submitError ? (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{submitError}</p>
           ) : null}
-        </form>
-      </div>
 
-      <div className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t border-neutral-200 bg-white px-4 py-3">
-        <button
-          type="submit"
-          form="checkout-form"
-          disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-rose-500 py-3 text-sm font-semibold text-white disabled:opacity-70"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Gerando PIX…
-            </>
-          ) : (
-            "Pagar com PIX"
-          )}
-        </button>
-      </div>
-    </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-rose-500 py-3.5 text-sm font-semibold text-white disabled:opacity-70"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Gerando PIX…
+              </>
+            ) : (
+              "Pagar com PIX"
+            )}
+          </button>
+        </form>
+    </StorefrontLayout>
   );
 }

@@ -1,5 +1,6 @@
 import { trackProductView } from "@/lib/api/admin.functions";
 import { PRODUCT } from "@/lib/checkout/constants";
+import { StorefrontFixedBottom, StorefrontLayout } from "@/components/storefront/StorefrontLayout";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
@@ -138,10 +139,9 @@ function ProductPage() {
   const next = () => setIndex((i) => (i === productImages.length - 1 ? 0 : i + 1));
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
-      <div className="mx-auto max-w-[480px] pb-28">
+    <StorefrontLayout bottomPadding="pb-28">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-4 py-3">
+        <header className="flex items-center justify-between px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top,0px))]">
           <button aria-label="Voltar" className="p-1">
             <ArrowLeft className="h-6 w-6" />
           </button>
@@ -167,7 +167,7 @@ function ProductPage() {
 
         {/* Gallery */}
         <div className="relative">
-          <div className="flex h-[360px] items-center justify-center bg-white px-6">
+          <div className="flex h-[min(360px,52dvh)] items-center justify-center bg-white px-6">
             <img
               src={productImages[index]}
               alt="Fritadeira Air Fryer Forno Oven 12L Mondial"
@@ -399,7 +399,8 @@ function ProductPage() {
         </section>
 
         {/* Recent purchase toast */}
-        <div className="fixed bottom-20 left-1/2 z-40 w-[92%] max-w-[440px] -translate-x-1/2 rounded-xl border border-neutral-200 bg-white p-3 shadow-lg">
+        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-40 px-4">
+          <div className="mx-auto max-w-[440px] rounded-xl border border-neutral-200 bg-white p-3 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100">
               <Package className="h-5 w-5 text-orange-600" />
@@ -410,12 +411,12 @@ function ProductPage() {
               <div className="text-emerald-600">✓ Aguardando envio</div>
             </div>
           </div>
+          </div>
         </div>
-      </div>
 
       {/* Bottom bar */}
-      <div className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t border-neutral-200 bg-white px-3 py-2">
-        <div className="flex items-center gap-2">
+      <StorefrontFixedBottom>
+        <div className="flex items-center gap-2 px-0 py-0">
           <button className="flex flex-col items-center text-[10px] text-neutral-600">
             <Store className="h-5 w-5" />
             Loja
@@ -433,7 +434,7 @@ function ProductPage() {
             <div className="text-[11px] font-normal opacity-90">R$ 69,90</div>
           </button>
         </div>
-      </div>
-    </div>
+      </StorefrontFixedBottom>
+    </StorefrontLayout>
   );
 }
